@@ -5,12 +5,9 @@
     <Product>HighPredsMod</Product>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="BepInEx.Core" Version="5.4.21" />
-    <PackageReference Include="UnityEngine.Modules" Version="2021.3.16" />
+    <Reference Include="Assembly-CSharp.dll" />
+    <Reference Include="BepInEx.dll" />
+    <Reference Include="UnityEngine.CoreModule.dll" />
+    <Reference Include="UnityEngine.dll" />
   </ItemGroup>
-  <PropertyGroup>
-    <RestoreAdditionalProjectSources>
-      https://bepinex.dev
-    </RestoreAdditionalProjectSources>
-  </PropertyGroup>
 </Project>
