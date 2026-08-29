@@ -1,5 +1,6 @@
 using BepInEx;
 using UnityEngine;
+using System;
 
 namespace HighPredsMod
 {
@@ -11,10 +12,17 @@ namespace HighPredsMod
 
         void Update()
         {
-            // Самый надежный способ считать нажатие без использования ControllerInputPoller
-            // Мод активируется, если зажаты правый Shift и пробел на клавиатуре (для теста), 
-            // либо если сработает кнопка джойстика через Unity Input
-            if (Input.GetKeyDown(KeyCode.Space) && Input.GetKey(KeyCode.RightShift) && !isModActive)
+            // Считываем нажатие правого триггера (курка) на контроллере Gorilla Tag через стандартный Unity Input
+            bool isTriggerPressed = false;
+            
+            // Проверяем стандартную ось правого курка в Unity
+            if (Input.GetAxis("RightTrigger") > 0.5f || Input.GetMouseButton(0)) 
+            {
+                isTriggerPressed = true;
+            }
+
+            // Если курок нажат и мод еще не активен — включаем таймер
+            if (isTriggerPressed && !isModActive)
             {
                 isModActive = true;
                 timer = 3f;
@@ -22,11 +30,11 @@ namespace HighPredsMod
 
             if (isModActive)
             {
-                // Находим объект игрока напрямую в движке Unity, обходя любые старые/новые библиотеки GorillaLocomotion
-                var player = FindObjectOfType<Component>();
+                // Находим объект игрока напрямую в движке Gorilla Tag
+                var player = FindObjectOfType(Type.GetType("GorillaLocomotion.Player, Assembly-CSharp"));
                 if (player != null)
                 {
-                    // Ищем поле predictionTime через рефлексию движка Unity, чтобы не зависеть от версии игры
+                    // Меняем predictionTime на 0.5
                     var field = player.GetType().GetField("predictionTime");
                     if (field != null)
                     {
@@ -34,18 +42,21 @@ namespace HighPredsMod
                     }
                 }
 
+                // Отсчитываем 3 секунды
                 timer -= Time.deltaTime;
 
                 if (timer <= 0f)
                 {
                     isModActive = false;
-                    var playerReset = FindObjectOfType<Component>();
+                    
+                    // Когда время вышло, возвращаем стандартную физику (0.02)
+                    var playerReset = FindObjectOfType(Type.GetType("GorillaLocomotion.Player, Assembly-CSharp"));
                     if (playerReset != null)
                     {
                         var field = playerReset.GetType().GetField("predictionTime");
                         if (field != null)
                         {
-                            field.SetValue(playerReset, 0.02f); // Возвращаем стандартное значение
+                            field.SetValue(playerReset, 0.02f);
                         }
                     }
                 }
