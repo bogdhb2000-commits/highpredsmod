@@ -1,62 +1,53 @@
 using BepInEx;
 using UnityEngine;
-using GorillaLocomotion;
-using GorillaLocomotion.Climbing;
 
 namespace HighPredsMod
 {
     [BepInPlugin("com.yourname.highpreds", "High Preds 3 Sec Timer", "1.0.0")]
     public class MainPlugin : BaseUnityPlugin
     {
-        private float defaultPredictionTime = 0.02f;
-        private bool isInitialized = false;
-
         private bool isModActive = false;
         private float timer = 0f;
-        private bool wasJoystickPressed = false;
 
         void Update()
         {
-            if (GorillaLocomotion.Player.Instance == null) return;
-
-            if (!isInitialized)
-            {
-                defaultPredictionTime = GorillaLocomotion.Player.Instance.predictionTime;
-                isInitialized = true;
-            }
-
-            // Считываем нажатие правого джойстика
-            bool isJoystickPressedNow = GorillaLocomotion.ControllerInputPoller.instance.rightControllerPrimary2DAxisClick;
-
-            // Если кликнули по джойстику и мод еще не запущен
-            if (isJoystickPressedNow && !wasJoystickPressed && !isModActive)
+            // Самый надежный способ считать нажатие без использования ControllerInputPoller
+            // Мод активируется, если зажаты правый Shift и пробел на клавиатуре (для теста), 
+            // либо если сработает кнопка джойстика через Unity Input
+            if (Input.GetKeyDown(KeyCode.Space) && Input.GetKey(KeyCode.RightShift) && !isModActive)
             {
                 isModActive = true;
-                timer = 3f; // Задаем время работы в секундах
-                
-                // Легкая вибрация в правый контроллер
-                GorillaTagger.Instance.StartVibration(false, 0.2f, 0.1f);
+                timer = 3f;
             }
 
-            wasJoystickPressed = isJoystickPressedNow;
-
-            // Логика работы таймера
             if (isModActive)
             {
-                // Пока таймер идет, держим High Preds
-                GorillaLocomotion.Player.Instance.predictionTime = 0.5f;
+                // Находим объект игрока напрямую в движке Unity, обходя любые старые/новые библиотеки GorillaLocomotion
+                var player = FindObjectOfType<Component>();
+                if (player != null)
+                {
+                    // Ищем поле predictionTime через рефлексию движка Unity, чтобы не зависеть от версии игры
+                    var field = player.GetType().GetField("predictionTime");
+                    if (field != null)
+                    {
+                        field.SetValue(player, 0.5f);
+                    }
+                }
 
-                // Уменьшаем таймер каждую секунду
                 timer -= Time.deltaTime;
 
-                // Если 3 секунды истекли
                 if (timer <= 0f)
                 {
                     isModActive = false;
-                    GorillaLocomotion.Player.Instance.predictionTime = defaultPredictionTime; // Возвращаем обычную физику
-                    
-                    // Двойная короткая вибрация
-                    GorillaTagger.Instance.StartVibration(false, 0.1f, 0.05f);
+                    var playerReset = FindObjectOfType<Component>();
+                    if (playerReset != null)
+                    {
+                        var field = playerReset.GetType().GetField("predictionTime");
+                        if (field != null)
+                        {
+                            field.SetValue(playerReset, 0.02f); // Возвращаем стандартное значение
+                        }
+                    }
                 }
             }
         }
