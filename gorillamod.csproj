@@ -6,17 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.16" />
     <Reference Include="Assembly-CSharp">
       <HintPath>Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
       <HintPath>BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
   </ItemGroup>
+  <PropertyGroup>
+    <RestoreAdditionalProjectSources>
+      https://bepinex.dev
+    </RestoreAdditionalProjectSources>
+  </PropertyGroup>
 </Project>
