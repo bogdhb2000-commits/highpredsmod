@@ -8,4 +8,9 @@
     <PackageReference Include="BepInEx.Core" Version="5.4.21" />
     <PackageReference Include="UnityEngine.Modules" Version="2021.3.16" />
   </ItemGroup>
+  <PropertyGroup>
+    <RestoreAdditionalProjectSources>
+      https://bepinex.dev
+    </RestoreAdditionalProjectSources>
+  </PropertyGroup>
 </Project>
