@@ -1,6 +1,7 @@
 using BepInEx;
 using UnityEngine;
 using GorillaLocomotion;
+using GorillaLocomotion.Climbing;
 
 namespace HighPredsMod
 {
@@ -16,16 +17,16 @@ namespace HighPredsMod
 
         void Update()
         {
-            if (Player.Instance == null) return;
+            if (GorillaLocomotion.Player.Instance == null) return;
 
             if (!isInitialized)
             {
-                defaultPredictionTime = Player.Instance.predictionTime;
+                defaultPredictionTime = GorillaLocomotion.Player.Instance.predictionTime;
                 isInitialized = true;
             }
 
-            // Считываем нажатие правого джойстика (как на фото)
-            bool isJoystickPressedNow = ControllerInputPoller.instance.rightControllerPrimary2DAxisClick;
+            // Считываем нажатие правого джойстика
+            bool isJoystickPressedNow = GorillaLocomotion.ControllerInputPoller.instance.rightControllerPrimary2DAxisClick;
 
             // Если кликнули по джойстику и мод еще не запущен
             if (isJoystickPressedNow && !wasJoystickPressed && !isModActive)
@@ -33,7 +34,7 @@ namespace HighPredsMod
                 isModActive = true;
                 timer = 3f; // Задаем время работы в секундах
                 
-                // Легкая вибрация в правый контроллер, чтобы вы знали, что таймер пошел
+                // Легкая вибрация в правый контроллер
                 GorillaTagger.Instance.StartVibration(false, 0.2f, 0.1f);
             }
 
@@ -43,7 +44,7 @@ namespace HighPredsMod
             if (isModActive)
             {
                 // Пока таймер идет, держим High Preds
-                Player.Instance.predictionTime = 0.5f;
+                GorillaLocomotion.Player.Instance.predictionTime = 0.5f;
 
                 // Уменьшаем таймер каждую секунду
                 timer -= Time.deltaTime;
@@ -52,9 +53,9 @@ namespace HighPredsMod
                 if (timer <= 0f)
                 {
                     isModActive = false;
-                    Player.Instance.predictionTime = defaultPredictionTime; // Возвращаем обычную физику
+                    GorillaLocomotion.Player.Instance.predictionTime = defaultPredictionTime; // Возвращаем обычную физику
                     
-                    // Двойная короткая вибрация, сообщающая, что мод отключился
+                    // Двойная короткая вибрация
                     GorillaTagger.Instance.StartVibration(false, 0.1f, 0.05f);
                 }
             }
