@@ -3,22 +3,20 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>HighPredsMod</AssemblyName>
     <Product>HighPredsMod</Product>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>latest</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <Reference Include="Assembly-CSharp">
-      <HintPath>Assembly-CSharp.dll</HintPath>
+      <HintPath>$(MSBuildProjectDirectory)/Assembly-CSharp.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>BepInEx.dll</HintPath>
+      <HintPath>$(MSBuildProjectDirectory)/BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>UnityEngine.dll</HintPath>
+      <HintPath>$(MSBuildProjectDirectory)/UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(MSBuildProjectDirectory)/UnityEngine.CoreModule.dll</HintPath>
     </Reference>
   </ItemGroup>
 </Project>
