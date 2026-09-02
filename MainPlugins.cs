@@ -18,27 +18,14 @@ namespace HighPredsMod
 
         void Update()
         {
-            // Находим игрока в сцене динамически
+            // Ленивая инициализация: ищем игрока только до тех пор, пока не найдем
             if (playerInstance == null)
             {
-                var allObjects = Object.FindObjectsOfType<MonoBehaviour>();
-                foreach (var obj in allObjects)
-                {
-                    if (obj.GetType().Name == "Player" && obj.GetType().Namespace == "GorillaLocomotion")
-                    {
-                        playerInstance = obj;
-                        predField = obj.GetType().GetField("predictionTime", 
-                            System.Reflection.BindingFlags.Public | 
-                            System.Reflection.BindingFlags.NonPublic | 
-                            System.Reflection.BindingFlags.Instance);
-                        break;
-                    }
-                }
+                FindPlayer();
+                if (playerInstance == null) return;
             }
 
-            if (playerInstance == null) return;
-
-            // Проверка ввода
+            // Опрос кнопок контроллера
             bool rightPressed = false;
             if (ControllerInputPoller.instance != null)
             {
@@ -46,17 +33,36 @@ namespace HighPredsMod
                                ControllerInputPoller.instance.rightControllerSecondaryButton;
             }
 
+            // Старт таймера
             if (rightPressed && !isTimerRunning)
             {
                 StartHighPreds();
             }
 
+            // Отсчет времени
             if (isTimerRunning)
             {
                 timer -= Time.deltaTime;
                 if (timer <= 0f)
                 {
                     ResetPreds();
+                }
+            }
+        }
+
+        private void FindPlayer()
+        {
+            var allObjects = Object.FindObjectsOfType<MonoBehaviour>();
+            foreach (var obj in allObjects)
+            {
+                if (obj.GetType().Name == "Player" && obj.GetType().Namespace == "GorillaLocomotion")
+                {
+                    playerInstance = obj;
+                    predField = obj.GetType().GetField("predictionTime", 
+                        System.Reflection.BindingFlags.Public | 
+                        System.Reflection.BindingFlags.NonPublic | 
+                        System.Reflection.BindingFlags.Instance);
+                    break;
                 }
             }
         }
