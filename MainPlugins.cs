@@ -1,7 +1,6 @@
 using BepInEx;
 using UnityEngine;
 using GorillaLocomotion;
-using System.Reflection;
 
 namespace HighPredsMod
 {
@@ -13,26 +12,22 @@ namespace HighPredsMod
         private const float TIMER_DURATION = 3f;
 
         private const float HIGH_PREDICTION = 0.20f; // 200 мс
-        private const float NORMAL_PREDICTION = 0.02f; // Норма
-
-        private FieldInfo predField;
-
-        void Awake()
-        {
-            // Получаем доступ к закрытому полю predictionTime через Reflection
-            predField = typeof(Player).GetField("predictionTime", 
-                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-        }
+        private const float NORMAL_PREDICTION = 0.02f; // Дефолт
 
         void Update()
         {
-            if (Player.Instance == null) return;
+            // Используем полный путь GorillaLocomotion.Player, чтобы избежать CS0246/CS0103
+            if (GorillaLocomotion.Player.Instance == null) return;
 
-            // Проверка клика по правому джойстику
-            bool rightStickClicked = ControllerInputPoller.instance != null && 
-                                     ControllerInputPoller.instance.rightControllerPrimaryTwoAxisClick;
+            // Используем стандартные поля ControllerInputPoller без rightControllerPrimaryTwoAxisClick
+            bool rightStickPressed = false;
+            if (ControllerInputPoller.instance != null)
+            {
+                rightStickPressed = ControllerInputPoller.instance.rightControllerPrimaryButton || 
+                                    ControllerInputPoller.instance.rightControllerSecondaryButton;
+            }
 
-            if (rightStickClicked && !isTimerRunning)
+            if (rightStickPressed && !isTimerRunning)
             {
                 StartHighPreds();
             }
@@ -51,26 +46,13 @@ namespace HighPredsMod
         {
             isTimerRunning = true;
             timer = TIMER_DURATION;
-            SetPrediction(HIGH_PREDICTION);
+            GorillaLocomotion.Player.Instance.predictionTime = HIGH_PREDICTION;
         }
 
         private void ResetPreds()
         {
             isTimerRunning = false;
-            SetPrediction(NORMAL_PREDICTION);
-        }
-
-        private void SetPrediction(float value)
-        {
-            if (predField != null)
-            {
-                predField.SetValue(Player.Instance, value);
-            }
-            else
-            {
-                // Запасной вариант, если поле публичное
-                Player.Instance.predictionTime = value;
-            }
+            GorillaLocomotion.Player.Instance.predictionTime = NORMAL_PREDICTION;
         }
     }
 }
