@@ -1,26 +1,25 @@
 using BepInEx;
 using UnityEngine;
-using GorillaLocomotion;
+using GorillaLocomotion; // Обязательно для использования Player.Instance
 
-namespace HighPredsTimer
+namespace HighPredsMod
 {
-    [BepInPlugin("com.yourname.highpredstimer", "High Preds 3 Sec Timer", "1.0.0")]
-    public class Plugin : BaseUnityPlugin
+    [BepInPlugin("com.yourname.highpredsmod", "High Preds 3 Sec Timer", "1.0.0")]
+    public class MainPlugins : BaseUnityPlugin
     {
         private bool isTimerRunning = false;
         private float timer = 0f;
         private const float TIMER_DURATION = 3f;
 
-        // Значения предикшена (настрой под свои нужды)
-        private const float HIGH_PREDICTION = 0.05f; // Значение во время таймера
-        private const float NORMAL_PREDICTION = 0.02f; // Исходное значение
+        private const float HIGH_PREDICTION = 0.20f; // 200 мс
+        private const float NORMAL_PREDICTION = 0.02f; // Дефолт
 
         void Update()
         {
-            // Проверяем доступность локального игрока
-            if (Player.Instance == null) return;
+            // Используем полный путь к классу Player
+            if (GorillaLocomotion.Player.Instance == null) return;
 
-            // Кликом по правому джойстику запускаем процесс
+            // Нажатие на правый джойстик (stick click)
             bool rightStickClicked = ControllerInputPoller.instance != null && 
                                      ControllerInputPoller.instance.rightControllerPrimaryTwoAxisClick;
 
@@ -29,11 +28,9 @@ namespace HighPredsTimer
                 StartHighPreds();
             }
 
-            // Отсчет 3 секунд
             if (isTimerRunning)
             {
                 timer -= Time.deltaTime;
-
                 if (timer <= 0f)
                 {
                     ResetPreds();
@@ -45,19 +42,13 @@ namespace HighPredsTimer
         {
             isTimerRunning = true;
             timer = TIMER_DURATION;
-
-            // Включаем повышенный предикшен
-            Player.Instance.predictionTime = HIGH_PREDICTION;
-            Logger.LogInfo($"High Preds включен ({HIGH_PREDICTION}) на {TIMER_DURATION} сек.");
+            GorillaLocomotion.Player.Instance.predictionTime = HIGH_PREDICTION;
         }
 
         private void ResetPreds()
         {
             isTimerRunning = false;
-
-            // Возвращаем обычный предикшен
-            Player.Instance.predictionTime = NORMAL_PREDICTION;
-            Logger.LogInfo($"Предикшен возвращен к норме ({NORMAL_PREDICTION}).");
+            GorillaLocomotion.Player.Instance.predictionTime = NORMAL_PREDICTION;
         }
     }
 }
