@@ -1,6 +1,6 @@
 using BepInEx;
 using UnityEngine;
-using GorillaLocomotion;
+using System.Reflection;
 
 namespace HighPredsMod
 {
@@ -10,27 +10,41 @@ namespace HighPredsMod
         private bool isTimerRunning = false;
         private float timer = 0f;
         private const float TIMER_DURATION = 3f;
-        
-        // 100 предикшена (0.1f = 100ms в секундах)
-        private const float HIGH_PREDICTION = 0.1f; 
-        
-        // Значение по умолчанию из настроек игры / SteamVR
+        private const float HIGH_PREDICTION = 0.1f;
+
         private float originalPrediction = 0.02f;
         private bool originalSaved = false;
 
+        private PropertyInfo predictionProp;
+        private object playerInstance;
+
         void Update()
         {
-            // Используем полное имя GorillaLocomotion.Player
-            if (GorillaLocomotion.Player.Instance == null) return;
+            // Получаем ссылку на игрока без прямой жесткой зависимости от пространств имён
+            if (playerInstance == null)
+            {
+                var playerType = System.Type.GetType("GorillaLocomotion.Player, Assembly-CSharp");
+                if (playerType != null)
+                {
+                    var instanceProp = playerType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
+                    if (instanceProp != null)
+                    {
+                        playerInstance = instanceProp.GetValue(null);
+                    }
+                    predictionProp = playerType.GetProperty("predictionTime", BindingFlags.Public | BindingFlags.Instance);
+                }
+            }
 
-            // Сохраняем стандартный предикшен при первом кадре
+            if (playerInstance == null || predictionProp == null) return;
+
+            // Сохраняем начальное значение
             if (!originalSaved)
             {
-                originalPrediction = GorillaLocomotion.Player.Instance.predictionTime;
+                originalPrediction = (float)predictionProp.GetValue(playerInstance);
                 originalSaved = true;
             }
 
-            // Опрос кнопок контроллера
+            // Проверка ввода
             bool rightPressed = false;
             if (ControllerInputPoller.instance != null)
             {
@@ -38,41 +52,23 @@ namespace HighPredsMod
                                ControllerInputPoller.instance.rightControllerSecondaryButton;
             }
 
-            // Старт таймера
+            // Активация на 3 секунды
             if (rightPressed && !isTimerRunning)
             {
-                StartHighPreds();
+                isTimerRunning = true;
+                timer = TIMER_DURATION;
+                predictionProp.SetValue(playerInstance, HIGH_PREDICTION);
             }
 
-            // Отсчет времени
+            // Таймер сброса
             if (isTimerRunning)
             {
                 timer -= Time.deltaTime;
                 if (timer <= 0f)
                 {
-                    ResetPreds();
+                    isTimerRunning = false;
+                    predictionProp.SetValue(playerInstance, originalPrediction);
                 }
-            }
-        }
-
-        private void StartHighPreds()
-        {
-            isTimerRunning = true;
-            timer = TIMER_DURATION;
-            SetPrediction(HIGH_PREDICTION);
-        }
-
-        private void ResetPreds()
-        {
-            isTimerRunning = false;
-            SetPrediction(originalPrediction); 
-        }
-
-        private void SetPrediction(float value)
-        {
-            if (GorillaLocomotion.Player.Instance != null)
-            {
-                GorillaLocomotion.Player.Instance.predictionTime = value;
             }
         }
     }
