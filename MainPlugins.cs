@@ -16,11 +16,10 @@ namespace HighPredsMod
 
         void Update()
         {
-            // Получаем инстанс игрока без прямого обращения к GorillaLocomotion.Player
-            var playerInstance = GorillaLocomotion.GorillaPlayer.Instance;
-            if (playerInstance == null) return;
+            // Обращение через GorillaLocomotion.Player.Instance
+            if (GorillaLocomotion.Player.Instance == null) return;
 
-            // Проверка кнопки правого контроллера
+            // Проверка нажатия кнопки правого контроллера
             bool rightPressed = false;
             if (ControllerInputPoller.instance != null)
             {
@@ -32,7 +31,7 @@ namespace HighPredsMod
             {
                 isTimerRunning = true;
                 timer = TIMER_DURATION;
-                playerInstance.predictionTime = HIGH_PREDICTION;
+                GorillaLocomotion.Player.Instance.predictionTime = HIGH_PREDICTION;
             }
 
             if (isTimerRunning)
@@ -41,7 +40,7 @@ namespace HighPredsMod
                 if (timer <= 0f)
                 {
                     isTimerRunning = false;
-                    playerInstance.predictionTime = NORMAL_PREDICTION;
+                    GorillaLocomotion.Player.Instance.predictionTime = NORMAL_PREDICTION;
                 }
             }
         }
