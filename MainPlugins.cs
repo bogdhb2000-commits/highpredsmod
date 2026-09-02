@@ -10,7 +10,7 @@ namespace HighPredsMod
         private float timer = 0f;
         private const float TIMER_DURATION = 3f;
 
-        private const float HIGH_PREDICTION = 0.20f;
+        private const float HIGH_PREDICTION = 0.1f;
         private const float NORMAL_PREDICTION = 0.02f;
 
         private Component playerInstance;
