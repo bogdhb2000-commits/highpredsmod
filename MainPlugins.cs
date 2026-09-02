@@ -1,6 +1,7 @@
 using BepInEx;
 using UnityEngine;
-using GorillaLocomotion; // Обязательно для использования Player.Instance
+using GorillaLocomotion;
+using System.Reflection;
 
 namespace HighPredsMod
 {
@@ -12,14 +13,22 @@ namespace HighPredsMod
         private const float TIMER_DURATION = 3f;
 
         private const float HIGH_PREDICTION = 0.20f; // 200 мс
-        private const float NORMAL_PREDICTION = 0.02f; // Дефолт
+        private const float NORMAL_PREDICTION = 0.02f; // Норма
+
+        private FieldInfo predField;
+
+        void Awake()
+        {
+            // Получаем доступ к закрытому полю predictionTime через Reflection
+            predField = typeof(Player).GetField("predictionTime", 
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+        }
 
         void Update()
         {
-            // Используем полный путь к классу Player
-            if (GorillaLocomotion.Player.Instance == null) return;
+            if (Player.Instance == null) return;
 
-            // Нажатие на правый джойстик (stick click)
+            // Проверка клика по правому джойстику
             bool rightStickClicked = ControllerInputPoller.instance != null && 
                                      ControllerInputPoller.instance.rightControllerPrimaryTwoAxisClick;
 
@@ -42,13 +51,26 @@ namespace HighPredsMod
         {
             isTimerRunning = true;
             timer = TIMER_DURATION;
-            GorillaLocomotion.Player.Instance.predictionTime = HIGH_PREDICTION;
+            SetPrediction(HIGH_PREDICTION);
         }
 
         private void ResetPreds()
         {
             isTimerRunning = false;
-            GorillaLocomotion.Player.Instance.predictionTime = NORMAL_PREDICTION;
+            SetPrediction(NORMAL_PREDICTION);
+        }
+
+        private void SetPrediction(float value)
+        {
+            if (predField != null)
+            {
+                predField.SetValue(Player.Instance, value);
+            }
+            else
+            {
+                // Запасной вариант, если поле публичное
+                Player.Instance.predictionTime = value;
+            }
         }
     }
 }
