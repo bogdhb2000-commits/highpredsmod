@@ -14,19 +14,19 @@ namespace HighPredsMod
         // 100 предикшена (0.1f = 100ms в секундах)
         private const float HIGH_PREDICTION = 0.1f; 
         
-        // Поле для сохранения оригинального значения из настроек игры/SteamVR
+        // Значение по умолчанию из настроек игры / SteamVR
         private float originalPrediction = 0.02f;
         private bool originalSaved = false;
 
         void Update()
         {
-            // Прямое обращение к игроку без использования FindObjectsOfType
-            if (Player.Instance == null) return;
+            // Используем полное имя GorillaLocomotion.Player
+            if (GorillaLocomotion.Player.Instance == null) return;
 
-            // Сохраняем дефолтный предикшен при первом старте
+            // Сохраняем стандартный предикшен при первом кадре
             if (!originalSaved)
             {
-                originalPrediction = Player.Instance.predictionTime;
+                originalPrediction = GorillaLocomotion.Player.Instance.predictionTime;
                 originalSaved = true;
             }
 
@@ -65,15 +65,14 @@ namespace HighPredsMod
         private void ResetPreds()
         {
             isTimerRunning = false;
-            // Возвращаем исходное значение из настроек игры/SteamVR
             SetPrediction(originalPrediction); 
         }
 
         private void SetPrediction(float value)
         {
-            if (Player.Instance != null)
+            if (GorillaLocomotion.Player.Instance != null)
             {
-                Player.Instance.predictionTime = value;
+                GorillaLocomotion.Player.Instance.predictionTime = value;
             }
         }
     }
