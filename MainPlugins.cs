@@ -1,66 +1,63 @@
 using BepInEx;
 using UnityEngine;
-using System;
+using GorillaLocomotion;
 
-namespace HighPredsMod
+namespace HighPredsTimer
 {
-    [BepInPlugin("com.yourname.highpreds", "High Preds 3 Sec Timer", "1.0.0")]
-    public class MainPlugin : BaseUnityPlugin
+    [BepInPlugin("com.yourname.highpredstimer", "High Preds 3 Sec Timer", "1.0.0")]
+    public class Plugin : BaseUnityPlugin
     {
-        private bool isModActive = false;
+        private bool isTimerRunning = false;
         private float timer = 0f;
+        private const float TIMER_DURATION = 3f;
+
+        // Значения предикшена (настрой под свои нужды)
+        private const float HIGH_PREDICTION = 0.05f; // Значение во время таймера
+        private const float NORMAL_PREDICTION = 0.02f; // Исходное значение
 
         void Update()
         {
-            // Считываем нажатие правого триггера (курка) на контроллере Gorilla Tag через стандартный Unity Input
-            bool isTriggerPressed = false;
-            
-            // Проверяем стандартную ось правого курка в Unity
-            if (Input.GetAxis("RightTrigger") > 0.5f || Input.GetMouseButton(0)) 
+            // Проверяем доступность локального игрока
+            if (Player.Instance == null) return;
+
+            // Кликом по правому джойстику запускаем процесс
+            bool rightStickClicked = ControllerInputPoller.instance != null && 
+                                     ControllerInputPoller.instance.rightControllerPrimaryTwoAxisClick;
+
+            if (rightStickClicked && !isTimerRunning)
             {
-                isTriggerPressed = true;
+                StartHighPreds();
             }
 
-            // Если курок нажат и мод еще не активен — включаем таймер
-            if (isTriggerPressed && !isModActive)
+            // Отсчет 3 секунд
+            if (isTimerRunning)
             {
-                isModActive = true;
-                timer = 3f;
-            }
-
-            if (isModActive)
-            {
-                // Находим объект игрока напрямую в движке Gorilla Tag
-                var player = FindObjectOfType(Type.GetType("GorillaLocomotion.Player, Assembly-CSharp"));
-                if (player != null)
-                {
-                    // Меняем predictionTime на 0.5
-                    var field = player.GetType().GetField("predictionTime");
-                    if (field != null)
-                    {
-                        field.SetValue(player, 0.5f);
-                    }
-                }
-
-                // Отсчитываем 3 секунды
                 timer -= Time.deltaTime;
 
                 if (timer <= 0f)
                 {
-                    isModActive = false;
-                    
-                    // Когда время вышло, возвращаем стандартную физику (0.02)
-                    var playerReset = FindObjectOfType(Type.GetType("GorillaLocomotion.Player, Assembly-CSharp"));
-                    if (playerReset != null)
-                    {
-                        var field = playerReset.GetType().GetField("predictionTime");
-                        if (field != null)
-                        {
-                            field.SetValue(playerReset, 0.02f);
-                        }
-                    }
+                    ResetPreds();
                 }
             }
+        }
+
+        private void StartHighPreds()
+        {
+            isTimerRunning = true;
+            timer = TIMER_DURATION;
+
+            // Включаем повышенный предикшен
+            Player.Instance.predictionTime = HIGH_PREDICTION;
+            Logger.LogInfo($"High Preds включен ({HIGH_PREDICTION}) на {TIMER_DURATION} сек.");
+        }
+
+        private void ResetPreds()
+        {
+            isTimerRunning = false;
+
+            // Возвращаем обычный предикшен
+            Player.Instance.predictionTime = NORMAL_PREDICTION;
+            Logger.LogInfo($"Предикшен возвращен к норме ({NORMAL_PREDICTION}).");
         }
     }
 }
