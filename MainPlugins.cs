@@ -1,6 +1,5 @@
 using BepInEx;
 using UnityEngine;
-using GorillaLocomotion;
 
 namespace HighPredsMod
 {
@@ -14,12 +13,32 @@ namespace HighPredsMod
         private const float HIGH_PREDICTION = 0.20f;
         private const float NORMAL_PREDICTION = 0.02f;
 
+        private Component playerInstance;
+        private System.Reflection.FieldInfo predField;
+
         void Update()
         {
-            // Обращение через GorillaLocomotion.Player.Instance
-            if (GorillaLocomotion.Player.Instance == null) return;
+            // Находим игрока в сцене динамически
+            if (playerInstance == null)
+            {
+                var allObjects = Object.FindObjectsOfType<MonoBehaviour>();
+                foreach (var obj in allObjects)
+                {
+                    if (obj.GetType().Name == "Player" && obj.GetType().Namespace == "GorillaLocomotion")
+                    {
+                        playerInstance = obj;
+                        predField = obj.GetType().GetField("predictionTime", 
+                            System.Reflection.BindingFlags.Public | 
+                            System.Reflection.BindingFlags.NonPublic | 
+                            System.Reflection.BindingFlags.Instance);
+                        break;
+                    }
+                }
+            }
 
-            // Проверка нажатия кнопки правого контроллера
+            if (playerInstance == null) return;
+
+            // Проверка ввода
             bool rightPressed = false;
             if (ControllerInputPoller.instance != null)
             {
@@ -29,9 +48,7 @@ namespace HighPredsMod
 
             if (rightPressed && !isTimerRunning)
             {
-                isTimerRunning = true;
-                timer = TIMER_DURATION;
-                GorillaLocomotion.Player.Instance.predictionTime = HIGH_PREDICTION;
+                StartHighPreds();
             }
 
             if (isTimerRunning)
@@ -39,9 +56,29 @@ namespace HighPredsMod
                 timer -= Time.deltaTime;
                 if (timer <= 0f)
                 {
-                    isTimerRunning = false;
-                    GorillaLocomotion.Player.Instance.predictionTime = NORMAL_PREDICTION;
+                    ResetPreds();
                 }
+            }
+        }
+
+        private void StartHighPreds()
+        {
+            isTimerRunning = true;
+            timer = TIMER_DURATION;
+            SetPrediction(HIGH_PREDICTION);
+        }
+
+        private void ResetPreds()
+        {
+            isTimerRunning = false;
+            SetPrediction(NORMAL_PREDICTION);
+        }
+
+        private void SetPrediction(float value)
+        {
+            if (predField != null && playerInstance != null)
+            {
+                predField.SetValue(playerInstance, value);
             }
         }
     }
