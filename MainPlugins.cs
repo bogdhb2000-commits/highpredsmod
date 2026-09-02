@@ -1,5 +1,6 @@
 using BepInEx;
 using UnityEngine;
+using GorillaLocomotion;
 
 namespace HighPredsMod
 {
@@ -9,20 +10,24 @@ namespace HighPredsMod
         private bool isTimerRunning = false;
         private float timer = 0f;
         private const float TIMER_DURATION = 3f;
-
-        private const float HIGH_PREDICTION = 0.1f;
-        private const float NORMAL_PREDICTION = 0.02f;
-
-        private Component playerInstance;
-        private System.Reflection.FieldInfo predField;
+        
+        // 100 предикшена (0.1f = 100ms в секундах)
+        private const float HIGH_PREDICTION = 0.1f; 
+        
+        // Поле для сохранения оригинального значения из настроек игры/SteamVR
+        private float originalPrediction = 0.02f;
+        private bool originalSaved = false;
 
         void Update()
         {
-            // Ленивая инициализация: ищем игрока только до тех пор, пока не найдем
-            if (playerInstance == null)
+            // Прямое обращение к игроку без использования FindObjectsOfType
+            if (Player.Instance == null) return;
+
+            // Сохраняем дефолтный предикшен при первом старте
+            if (!originalSaved)
             {
-                FindPlayer();
-                if (playerInstance == null) return;
+                originalPrediction = Player.Instance.predictionTime;
+                originalSaved = true;
             }
 
             // Опрос кнопок контроллера
@@ -50,23 +55,6 @@ namespace HighPredsMod
             }
         }
 
-        private void FindPlayer()
-        {
-            var allObjects = Object.FindObjectsOfType<MonoBehaviour>();
-            foreach (var obj in allObjects)
-            {
-                if (obj.GetType().Name == "Player" && obj.GetType().Namespace == "GorillaLocomotion")
-                {
-                    playerInstance = obj;
-                    predField = obj.GetType().GetField("predictionTime", 
-                        System.Reflection.BindingFlags.Public | 
-                        System.Reflection.BindingFlags.NonPublic | 
-                        System.Reflection.BindingFlags.Instance);
-                    break;
-                }
-            }
-        }
-
         private void StartHighPreds()
         {
             isTimerRunning = true;
@@ -77,14 +65,15 @@ namespace HighPredsMod
         private void ResetPreds()
         {
             isTimerRunning = false;
-            SetPrediction(NORMAL_PREDICTION);
+            // Возвращаем исходное значение из настроек игры/SteamVR
+            SetPrediction(originalPrediction); 
         }
 
         private void SetPrediction(float value)
         {
-            if (predField != null && playerInstance != null)
+            if (Player.Instance != null)
             {
-                predField.SetValue(playerInstance, value);
+                Player.Instance.predictionTime = value;
             }
         }
     }
