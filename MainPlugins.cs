@@ -11,25 +11,28 @@ namespace HighPredsMod
         private float timer = 0f;
         private const float TIMER_DURATION = 3f;
 
-        private const float HIGH_PREDICTION = 0.20f; // 200 мс
-        private const float NORMAL_PREDICTION = 0.02f; // Дефолт
+        private const float HIGH_PREDICTION = 0.20f;
+        private const float NORMAL_PREDICTION = 0.02f;
 
         void Update()
         {
-            // Используем полный путь GorillaLocomotion.Player, чтобы избежать CS0246/CS0103
-            if (GorillaLocomotion.Player.Instance == null) return;
+            // Получаем инстанс игрока без прямого обращения к GorillaLocomotion.Player
+            var playerInstance = GorillaLocomotion.GorillaPlayer.Instance;
+            if (playerInstance == null) return;
 
-            // Используем стандартные поля ControllerInputPoller без rightControllerPrimaryTwoAxisClick
-            bool rightStickPressed = false;
+            // Проверка кнопки правого контроллера
+            bool rightPressed = false;
             if (ControllerInputPoller.instance != null)
             {
-                rightStickPressed = ControllerInputPoller.instance.rightControllerPrimaryButton || 
-                                    ControllerInputPoller.instance.rightControllerSecondaryButton;
+                rightPressed = ControllerInputPoller.instance.rightControllerPrimaryButton || 
+                               ControllerInputPoller.instance.rightControllerSecondaryButton;
             }
 
-            if (rightStickPressed && !isTimerRunning)
+            if (rightPressed && !isTimerRunning)
             {
-                StartHighPreds();
+                isTimerRunning = true;
+                timer = TIMER_DURATION;
+                playerInstance.predictionTime = HIGH_PREDICTION;
             }
 
             if (isTimerRunning)
@@ -37,22 +40,10 @@ namespace HighPredsMod
                 timer -= Time.deltaTime;
                 if (timer <= 0f)
                 {
-                    ResetPreds();
+                    isTimerRunning = false;
+                    playerInstance.predictionTime = NORMAL_PREDICTION;
                 }
             }
-        }
-
-        private void StartHighPreds()
-        {
-            isTimerRunning = true;
-            timer = TIMER_DURATION;
-            GorillaLocomotion.Player.Instance.predictionTime = HIGH_PREDICTION;
-        }
-
-        private void ResetPreds()
-        {
-            isTimerRunning = false;
-            GorillaLocomotion.Player.Instance.predictionTime = NORMAL_PREDICTION;
         }
     }
 }
