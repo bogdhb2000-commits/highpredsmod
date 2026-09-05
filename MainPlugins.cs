@@ -8,7 +8,7 @@ namespace MySilentPullMod
     [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
     public class SilentPullMod : BaseUnityPlugin
     {
-        public static float pullStrength = 40f; 
+        public static float pullStrength = 15f; 
         private VRRig currentTarget = null;
 
         void Update()
@@ -44,9 +44,10 @@ namespace MySilentPullMod
             float minDistance = float.MaxValue;
             Vector3 myPos = GorillaTagger.Instance.bodyCollider.transform.position;
 
-            foreach (VRRig rig in GorillaParent.instance.vrrigs)
+            VRRig[] allRigs = Object.FindObjectsOfType<VRRig>();
+            foreach (VRRig rig in allRigs)
             {
-                if (rig != null && !rig.IsLocal())
+                if (rig != null && rig != GorillaTagger.Instance.offlineVRRig)
                 {
                     float dist = Vector3.Distance(myPos, rig.transform.position);
                     if (dist < minDistance)
