@@ -1,75 +1,72 @@
 using BepInEx;
 using UnityEngine;
-using System.Reflection;
+using UnityEngine.XR;
+using GorillaLocomotion;
 
-namespace HighPredsMod
+namespace MySilentPullMod
 {
-    [BepInPlugin("com.yourname.highpredsmod", "High Preds 3 Sec Timer", "1.0.0")]
-    public class MainPlugins : BaseUnityPlugin
+    [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
+    public class SilentPullMod : BaseUnityPlugin
     {
-        private bool isTimerRunning = false;
-        private float timer = 0f;
-        private const float TIMER_DURATION = 3f;
-        private const float HIGH_PREDICTION = 0.1f;
-
-        private float originalPrediction = 0.02f;
-        private bool originalSaved = false;
-
-        private PropertyInfo predictionProp;
-        private object playerInstance;
+        public static float pullStrength = 40f; 
+        private VRRig currentTarget = null;
 
         void Update()
         {
-            // Получаем ссылку на игрока без прямой жесткой зависимости от пространств имён
-            if (playerInstance == null)
+            bool isJoystickPressed = IsJoystickClicked(XRNode.RightHand);
+
+            if (isJoystickPressed)
             {
-                var playerType = System.Type.GetType("GorillaLocomotion.Player, Assembly-CSharp");
-                if (playerType != null)
+                if (currentTarget == null)
                 {
-                    var instanceProp = playerType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static);
-                    if (instanceProp != null)
+                    currentTarget = GetClosestPlayer();
+                }
+
+                if (currentTarget != null)
+                {
+                    Vector3 myPosition = GorillaTagger.Instance.bodyCollider.transform.position;
+                    currentTarget.transform.position = Vector3.Lerp(
+                        currentTarget.transform.position, 
+                        myPosition, 
+                        Time.deltaTime * pullStrength
+                    );
+                }
+            }
+            else
+            {
+                currentTarget = null;
+            }
+        }
+
+        private VRRig GetClosestPlayer()
+        {
+            VRRig closest = null;
+            float minDistance = float.MaxValue;
+            Vector3 myPos = GorillaTagger.Instance.bodyCollider.transform.position;
+
+            foreach (VRRig rig in GorillaParent.instance.vrrigs)
+            {
+                if (rig != null && !rig.IsLocal())
+                {
+                    float dist = Vector3.Distance(myPos, rig.transform.position);
+                    if (dist < minDistance)
                     {
-                        playerInstance = instanceProp.GetValue(null);
+                        minDistance = dist;
+                        closest = rig;
                     }
-                    predictionProp = playerType.GetProperty("predictionTime", BindingFlags.Public | BindingFlags.Instance);
                 }
             }
+            return closest;
+        }
 
-            if (playerInstance == null || predictionProp == null) return;
-
-            // Сохраняем начальное значение
-            if (!originalSaved)
+        private bool IsJoystickClicked(XRNode node)
+        {
+            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
+            if (device.isValid && device.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out bool isPressed))
             {
-                originalPrediction = (float)predictionProp.GetValue(playerInstance);
-                originalSaved = true;
+                return isPressed;
             }
-
-            // Проверка ввода
-            bool rightPressed = false;
-            if (ControllerInputPoller.instance != null)
-            {
-                rightPressed = ControllerInputPoller.instance.rightControllerPrimaryButton || 
-                               ControllerInputPoller.instance.rightControllerSecondaryButton;
-            }
-
-            // Активация на 3 секунды
-            if (rightPressed && !isTimerRunning)
-            {
-                isTimerRunning = true;
-                timer = TIMER_DURATION;
-                predictionProp.SetValue(playerInstance, HIGH_PREDICTION);
-            }
-
-            // Таймер сброса
-            if (isTimerRunning)
-            {
-                timer -= Time.deltaTime;
-                if (timer <= 0f)
-                {
-                    isTimerRunning = false;
-                    predictionProp.SetValue(playerInstance, originalPrediction);
-                }
-            }
+            return false;
         }
     }
 }
