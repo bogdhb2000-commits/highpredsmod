@@ -11,11 +11,11 @@ namespace MySilentPullMod
     public class SilentPullMod : BaseUnityPlugin
     {
         // Переменные для Silent Pull
-        public static float pullStrength = 15f;
+        public static float pullStrength = 0.4f;
         private VRRig currentTarget = null;
 
         // Переменные для Playspace Abuse
-        public static float playspaceAbusePower = 0.004f;
+        public static float playspaceAbusePower = 0.01f;
 
         void Update()
         {
