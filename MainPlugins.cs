@@ -9,26 +9,35 @@ namespace MyVelocityPredictionMod
     {
         public static float predCount = 0.4f;
 
+        private Vector3 lastLeftPos;
+        private Vector3 lastRightPos;
+
         void Update()
         {
-            // Проверка нажатия кнопки A на правом контроллере
+            if (GorillaTagger.Instance == null || GorillaTagger.Instance.offlineVRRig == null) 
+                return;
+
+            // Находим текущее положение рук
+            Transform leftTransform = GorillaTagger.Instance.leftHandTransform;
+            Transform rightTransform = GorillaTagger.Instance.rightHandTransform;
+
+            if (leftTransform == null || rightTransform == null) 
+                return;
+
+            // Высчитываем скорость движения рук (смещение за время кадра)
+            Vector3 leftVelocity = (leftTransform.position - lastLeftPos) / Time.deltaTime;
+            Vector3 rightVelocity = (rightTransform.position - lastRightPos) / Time.deltaTime;
+
+            // Сохраняем позиции для следующего кадра
+            lastLeftPos = leftTransform.position;
+            lastRightPos = rightTransform.position;
+
+            // Если зажата кнопка A — вытягиваем руки в сторону движения
             if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.rightControllerPrimaryButton)
             {
-                ApplyPrediction();
+                GorillaTagger.Instance.offlineVRRig.leftHand.rigTarget.transform.position += leftVelocity * (predCount * 0.1f);
+                GorillaTagger.Instance.offlineVRRig.rightHand.rigTarget.transform.position += rightVelocity * (predCount * 0.1f);
             }
-        }
-
-        private void ApplyPrediction()
-        {
-            if (GorillaTagger.Instance == null) return;
-
-            // Получаем скорость рук напрямую через Rigidbody игроков
-            Vector3 leftVelocity = GorillaTagger.Instance.leftHandTransform.GetComponent<Rigidbody>()?.velocity ?? Vector3.zero;
-            Vector3 rightVelocity = GorillaTagger.Instance.rightHandTransform.GetComponent<Rigidbody>()?.velocity ?? Vector3.zero;
-
-            // Применяем смещение
-            GorillaTagger.Instance.offlineVRRig.leftHand.rigTarget.transform.position -= leftVelocity * predCount;
-            GorillaTagger.Instance.offlineVRRig.rightHand.rigTarget.transform.position -= rightVelocity * predCount;
         }
     }
 }
