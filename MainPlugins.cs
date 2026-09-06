@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using BepInEx;
 using UnityEngine;
-using UnityEngine.XR;
 using GorillaLocomotion;
 
 namespace MySilentPullMod
@@ -10,64 +8,48 @@ namespace MySilentPullMod
     [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
     public class SilentPullMod : BaseUnityPlugin
     {
-        // Переменные для Silent Pull
+        // Настройки Silent Pull
         public static float pullStrength = 0.4f;
-        private VRRig currentTarget = null;
 
-        // Переменные для Playspace Abuse
-        public static float playspaceAbusePower = 0.01f;
+        // Настройки Playspace Abuse
+        public static float playspaceAbusePower = 0.05f;
 
         void Update()
         {
-            // 1. Silent Pull на кнопку B (SecondaryButton на Правой руке)
-            bool isBPressed = IsButtonPressed(XRNode.RightHand, CommonUsages.secondaryButton);
-            if (isBPressed)
+            // 1. Silent Pull на кнопку B (Правая рука - Secondary Button)
+            if (ControllerInputPoller.instance.rightControllerSecondaryButton)
             {
-                if (currentTarget == null)
+                VRRig target = GetClosestPlayer();
+                if (target != null)
                 {
-                    currentTarget = GetClosestPlayer();
-                }
-
-                if (currentTarget != null)
-                {
-                    Vector3 myPosition = GorillaTagger.Instance.bodyCollider.transform.position;
-                    currentTarget.transform.position = Vector3.Lerp(
-                        currentTarget.transform.position, 
-                        myPosition, 
-                        Time.deltaTime * pullStrength
-                    );
+                    // Движение нашего игрока к цели (актуально для физики Gorilla Tag)
+                    Vector3 direction = (target.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
+                    Player.Instance.GetComponent<Rigidbody>().velocity = direction * pullStrength;
                 }
             }
-            else
-            {
-                currentTarget = null;
-            }
 
-            // 2. Playspace Abuse на кнопку X (PrimaryButton на Левой руке)
-            bool isXPressed = IsButtonPressed(XRNode.LeftHand, CommonUsages.primaryButton);
-            if (isXPressed)
+            // 2. Playspace Abuse на кнопку X (Левая рука - Primary Button)
+            if (ControllerInputPoller.instance.leftControllerPrimaryButton)
             {
                 PlayspaceAbuse();
             }
         }
 
-        // Логика смещения
         private void PlayspaceAbuse()
         {
+            // Перемещение с учетом направления головы
             GorillaTagger.Instance.transform.position += GorillaTagger.Instance.headCollider.transform.forward * playspaceAbusePower;
         }
 
-        // Поиск ближайшего игрока
         private VRRig GetClosestPlayer()
         {
             VRRig closest = null;
             float minDistance = float.MaxValue;
             Vector3 myPos = GorillaTagger.Instance.bodyCollider.transform.position;
-            VRRig[] allRigs = UnityEngine.Object.FindObjectsOfType<VRRig>();
 
-            foreach (VRRig rig in allRigs)
+            foreach (VRRig rig in UnityEngine.Object.FindObjectsOfType<VRRig>())
             {
-                if (rig != null && rig != GorillaTagger.Instance.offlineVRRig)
+                if (rig != null && rig != GorillaTagger.Instance.offlineVRRig && !rig.isOfflineVRRig)
                 {
                     float dist = Vector3.Distance(myPos, rig.transform.position);
                     if (dist < minDistance)
@@ -79,18 +61,6 @@ namespace MySilentPullMod
             }
 
             return closest;
-        }
-
-        // Проверка нажатия заданной кнопки
-        private bool IsButtonPressed(XRNode node, InputFeatureUsage<bool> button)
-        {
-            InputDevice device = InputDevices.GetDeviceAtXRNode(node);
-            if (device.isValid && device.TryGetFeatureValue(button, out bool isPressed))
-            {
-                return isPressed;
-            }
-
-            return false;
         }
     }
 }
