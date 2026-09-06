@@ -10,18 +10,18 @@ namespace MySilentPullMod
     [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
     public class SilentPullMod : BaseUnityPlugin
     {
-        // Переменные для Silent Pull (Правый джойстик)
+        // Переменные для Silent Pull
         public static float pullStrength = 15f;
         private VRRig currentTarget = null;
 
-        // Переменные для Playspace Abuse (Левый джойстик)
+        // Переменные для Playspace Abuse
         public static float playspaceAbusePower = 0.004f;
 
         void Update()
         {
-            // 1. Скрытый Silent Pull на правый джойстик (нажатие)
-            bool isRightJoystickPressed = IsJoystickClicked(XRNode.RightHand);
-            if (isRightJoystickPressed)
+            // 1. Silent Pull на кнопку B (SecondaryButton на Правой руке)
+            bool isBPressed = IsButtonPressed(XRNode.RightHand, CommonUsages.secondaryButton);
+            if (isBPressed)
             {
                 if (currentTarget == null)
                 {
@@ -43,15 +43,15 @@ namespace MySilentPullMod
                 currentTarget = null;
             }
 
-            // 2. Скрытый Playspace Abuse на левый джойстик (нажатие)
-            bool isLeftJoystickPressed = IsJoystickClicked(XRNode.LeftHand);
-            if (isLeftJoystickPressed)
+            // 2. Playspace Abuse на кнопку X (PrimaryButton на Левой руке)
+            bool isXPressed = IsButtonPressed(XRNode.LeftHand, CommonUsages.primaryButton);
+            if (isXPressed)
             {
                 PlayspaceAbuse();
             }
         }
 
-        // Логика смещения без визуальных эффектов и текстов
+        // Логика смещения
         private void PlayspaceAbuse()
         {
             GorillaTagger.Instance.transform.position += GorillaTagger.Instance.headCollider.transform.forward * playspaceAbusePower;
@@ -81,11 +81,11 @@ namespace MySilentPullMod
             return closest;
         }
 
-        // Проверка нажатия джойстика
-        private bool IsJoystickClicked(XRNode node)
+        // Проверка нажатия заданной кнопки
+        private bool IsButtonPressed(XRNode node, InputFeatureUsage<bool> button)
         {
             InputDevice device = InputDevices.GetDeviceAtXRNode(node);
-            if (device.isValid && device.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out bool isPressed))
+            if (device.isValid && device.TryGetFeatureValue(button, out bool isPressed))
             {
                 return isPressed;
             }
