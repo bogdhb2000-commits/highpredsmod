@@ -9,7 +9,7 @@ namespace MySilentPullMod
     public class SilentPullMod : BaseUnityPlugin
     {
         // Настройки Silent Pull
-        public static float pullStrength = 0.4f;
+        public static float pullStrength = 8f;
 
         // Настройки Playspace Abuse
         public static float playspaceAbusePower = 0.05f;
@@ -17,19 +17,24 @@ namespace MySilentPullMod
         void Update()
         {
             // 1. Silent Pull на кнопку B (Правая рука - Secondary Button)
-            if (ControllerInputPoller.instance.rightControllerSecondaryButton)
+            if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.rightControllerSecondaryButton)
             {
                 VRRig target = GetClosestPlayer();
                 if (target != null)
                 {
-                    // Движение нашего игрока к цели (актуально для физики Gorilla Tag)
                     Vector3 direction = (target.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
-                    Player.Instance.GetComponent<Rigidbody>().velocity = direction * pullStrength;
+                    
+                    // Явно указываем пространство имён GorillaLocomotion
+                    Rigidbody playerRigidbody = GorillaLocomotion.Player.Instance.GetComponent<Rigidbody>();
+                    if (playerRigidbody != null)
+                    {
+                        playerRigidbody.velocity = direction * pullStrength;
+                    }
                 }
             }
 
             // 2. Playspace Abuse на кнопку X (Левая рука - Primary Button)
-            if (ControllerInputPoller.instance.leftControllerPrimaryButton)
+            if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.leftControllerPrimaryButton)
             {
                 PlayspaceAbuse();
             }
@@ -37,7 +42,6 @@ namespace MySilentPullMod
 
         private void PlayspaceAbuse()
         {
-            // Перемещение с учетом направления головы
             GorillaTagger.Instance.transform.position += GorillaTagger.Instance.headCollider.transform.forward * playspaceAbusePower;
         }
 
