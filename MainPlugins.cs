@@ -1,7 +1,6 @@
 using System;
 using BepInEx;
 using UnityEngine;
-using GorillaLocomotion;
 
 namespace MySilentPullMod
 {
@@ -24,8 +23,7 @@ namespace MySilentPullMod
                 {
                     Vector3 direction = (target.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
                     
-                    // Явно указываем пространство имён GorillaLocomotion
-                    Rigidbody playerRigidbody = GorillaLocomotion.Player.Instance.GetComponent<Rigidbody>();
+                    Rigidbody playerRigidbody = GorillaTagger.Instance.rigidbody;
                     if (playerRigidbody != null)
                     {
                         playerRigidbody.velocity = direction * pullStrength;
