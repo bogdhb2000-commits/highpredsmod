@@ -2,26 +2,57 @@ using System;
 using BepInEx;
 using UnityEngine;
 
-namespace MySilentPullMod
+namespace MyVelocityPredictionMod
 {
-    [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
-    public class SilentPullMod : BaseUnityPlugin
+    [BepInPlugin("com.username.velocityprediction", "Velocity Prediction Mod", "1.0.0")]
+    public class VelocityPredictionMod : BaseUnityPlugin
     {
-        // Сила смещения
-        public static float playspaceAbusePower = 0.07f;
+        // Сила предикшена
+        public static float predCount = 0.4f;
+
+        private GameObject lvT;
+        private GameObject rvT;
+
+        void Start()
+        {
+            // Создаем трекеры скорости
+            lvT = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Destroy(lvT.GetComponent<BoxCollider>());
+            lvT.GetComponent<Renderer>().enabled = false;
+            lvT.AddComponent<GorillaVelocityTracker>();
+
+            rvT = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Destroy(rvT.GetComponent<BoxCollider>());
+            rvT.GetComponent<Renderer>().enabled = false;
+            rvT.AddComponent<GorillaVelocityTracker>();
+        }
 
         void Update()
         {
-            // Проверка нажатия кнопки X на левом контроллере
-            if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.leftControllerPrimaryButton)
+            // Проверка нажатия кнопки A на правом контроллере
+            if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.rightControllerPrimaryButton)
             {
-                PlayspaceAbuse();
+                ApplyPrediction();
             }
         }
 
-        private void PlayspaceAbuse()
+        private void ApplyPrediction()
         {
-            GorillaTagger.Instance.transform.position += GorillaTagger.Instance.headCollider.transform.forward * playspaceAbusePower;
+            if (GorillaTagger.Instance == null) return;
+
+            // Расчет позиции трекеров
+            lvT.transform.position = GorillaTagger.Instance.headCollider.transform.position - GorillaTagger.Instance.leftHandTransform.position;
+            rvT.transform.position = GorillaTagger.Instance.headCollider.transform.position - GorillaTagger.Instance.rightHandTransform.position;
+
+            // Смещение рук
+            GorillaTagger.Instance.offlineVRRig.leftHand.rigTarget.transform.position -= lvT.GetComponent<GorillaVelocityTracker>().GetAverageVelocity(true, 0) * predCount;
+            GorillaTagger.Instance.offlineVRRig.rightHand.rigTarget.transform.position -= rvT.GetComponent<GorillaVelocityTracker>().GetAverageVelocity(true, 0) * predCount;
+        }
+
+        private void OnDestroy()
+        {
+            if (lvT != null) Destroy(lvT);
+            if (rvT != null) Destroy(rvT);
         }
     }
 }
