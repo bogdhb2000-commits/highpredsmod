@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using BepInEx;
 using UnityEngine;
 using UnityEngine.XR;
@@ -8,14 +10,18 @@ namespace MySilentPullMod
     [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
     public class SilentPullMod : BaseUnityPlugin
     {
-        public static float pullStrength = 15f; 
+        // Переменные для Silent Pull (Правый джойстик)
+        public static float pullStrength = 15f;
         private VRRig currentTarget = null;
+
+        // Переменные для Playspace Abuse (Левый джойстик)
+        public static float playspaceAbusePower = 0.004f;
 
         void Update()
         {
-            bool isJoystickPressed = IsJoystickClicked(XRNode.RightHand);
-
-            if (isJoystickPressed)
+            // 1. Скрытый Silent Pull на правый джойстик (нажатие)
+            bool isRightJoystickPressed = IsJoystickClicked(XRNode.RightHand);
+            if (isRightJoystickPressed)
             {
                 if (currentTarget == null)
                 {
@@ -36,15 +42,29 @@ namespace MySilentPullMod
             {
                 currentTarget = null;
             }
+
+            // 2. Скрытый Playspace Abuse на левый джойстик (нажатие)
+            bool isLeftJoystickPressed = IsJoystickClicked(XRNode.LeftHand);
+            if (isLeftJoystickPressed)
+            {
+                PlayspaceAbuse();
+            }
         }
 
+        // Логика смещения без визуальных эффектов и текстов
+        private void PlayspaceAbuse()
+        {
+            GorillaTagger.Instance.transform.position += GorillaTagger.Instance.headCollider.transform.forward * playspaceAbusePower;
+        }
+
+        // Поиск ближайшего игрока
         private VRRig GetClosestPlayer()
         {
             VRRig closest = null;
             float minDistance = float.MaxValue;
             Vector3 myPos = GorillaTagger.Instance.bodyCollider.transform.position;
+            VRRig[] allRigs = UnityEngine.Object.FindObjectsOfType<VRRig>();
 
-            VRRig[] allRigs = Object.FindObjectsOfType<VRRig>();
             foreach (VRRig rig in allRigs)
             {
                 if (rig != null && rig != GorillaTagger.Instance.offlineVRRig)
@@ -57,9 +77,11 @@ namespace MySilentPullMod
                     }
                 }
             }
+
             return closest;
         }
 
+        // Проверка нажатия джойстика
         private bool IsJoystickClicked(XRNode node)
         {
             InputDevice device = InputDevices.GetDeviceAtXRNode(node);
@@ -67,6 +89,7 @@ namespace MySilentPullMod
             {
                 return isPressed;
             }
+
             return false;
         }
     }
