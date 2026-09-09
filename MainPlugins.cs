@@ -7,7 +7,7 @@ namespace MyVelocityPredictionMod
     [BepInPlugin("com.username.velocityprediction", "Velocity Prediction Mod", "1.0.0")]
     public class MainPlugins : BaseUnityPlugin
     {
-        public static float predCount = 0.4f;
+        public static float predCount = 0.9f;
 
         private Vector3 lastLeftPos;
         private Vector3 lastRightPos;
