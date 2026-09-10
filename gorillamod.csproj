@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <AssemblyName>VelocityPredictionMod</AssemblyName>
+    <AssemblyName>HighPredsMod</AssemblyName>
     <RootNamespace>MyVelocityPredictionMod</RootNamespace>
     <LangVersion>latest</LangVersion>
   </PropertyGroup>
