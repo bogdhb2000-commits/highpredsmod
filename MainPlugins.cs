@@ -1,70 +1,27 @@
+using System;
 using BepInEx;
 using UnityEngine;
 
-namespace MyVelocityPredictionMod
+namespace MySilentPullMod
 {
-    [BepInPlugin(
-        "com.username.velocityprediction",
-        "Velocity Prediction Mod",
-        "1.0.0"
-    )]
-    public class MainPlugins : BaseUnityPlugin
+    [BepInPlugin("com.username.silentpullmod", "Silent Pull Mod", "1.0.0")]
+    public class SilentPullMod : BaseUnityPlugin
     {
-        public static float predCount = 0.9f;
+        // Сила смещения
+        public static float playspaceAbusePower = 0.08f;
 
-        private Vector3 lastLeftPos;
-        private Vector3 lastRightPos;
-        private bool initialized;
-
-        private void Update()
+        void Update()
         {
-            if (GorillaTagger.Instance == null)
-                return;
-
-            Transform leftHand = GorillaTagger.Instance.leftHandTransform;
-            Transform rightHand = GorillaTagger.Instance.rightHandTransform;
-
-            if (leftHand == null || rightHand == null)
-                return;
-
-            // Первый кадр — только запоминаем позиции
-            if (!initialized)
+            // Проверка нажатия кнопки X на левом контроллере
+            if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.leftControllerPrimaryButton)
             {
-                lastLeftPos = leftHand.position;
-                lastRightPos = rightHand.position;
-                initialized = true;
-                return;
+                PlayspaceAbuse();
             }
+        }
 
-            float deltaTime = Time.deltaTime;
-
-            if (deltaTime <= 0f)
-                return;
-
-            // Скорость рук
-            Vector3 leftVelocity =
-                (leftHand.position - lastLeftPos) / deltaTime;
-
-            Vector3 rightVelocity =
-                (rightHand.position - lastRightPos) / deltaTime;
-
-            // Запоминаем позиции для следующего кадра
-            lastLeftPos = leftHand.position;
-            lastRightPos = rightHand.position;
-
-            // A на правом контроллере
-            if (ControllerInputPoller.instance != null &&
-                ControllerInputPoller.instance.rightControllerPrimaryButton)
-            {
-                if (GorillaTagger.Instance.offlineVRRig == null)
-                    return;
-
-                GorillaTagger.Instance.offlineVRRig.leftHand
-                    .rigTarget.transform.position += leftVelocity * predCount;
-
-                GorillaTagger.Instance.offlineVRRig.rightHand
-                    .rigTarget.transform.position += rightVelocity * predCount;
-            }
+        private void PlayspaceAbuse()
+        {
+            GorillaTagger.Instance.transform.position += GorillaTagger.Instance.headCollider.transform.forward * playspaceAbusePower;
         }
     }
 }
