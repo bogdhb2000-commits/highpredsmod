@@ -8,21 +8,18 @@ namespace MyVelocityPredictionMod
     public class MainPlugins : BaseUnityPlugin
     {
         public static float predCount = 0.9f;
-
         private Vector3 lastLeftPos;
         private Vector3 lastRightPos;
 
         void Update()
         {
-            if (GorillaTagger.Instance == null || GorillaTagger.Instance.offlineVRRig == null) 
-                return;
+            if (GorillaTagger.Instance == null || GorillaTagger.Instance.offlineVRRig == null) return;
 
             // Находим текущее положение рук
             Transform leftTransform = GorillaTagger.Instance.leftHandTransform;
             Transform rightTransform = GorillaTagger.Instance.rightHandTransform;
 
-            if (leftTransform == null || rightTransform == null) 
-                return;
+            if (leftTransform == null || rightTransform == null) return;
 
             // Высчитываем скорость движения рук (смещение за время кадра)
             Vector3 leftVelocity = (leftTransform.position - lastLeftPos) / Time.deltaTime;
@@ -35,8 +32,8 @@ namespace MyVelocityPredictionMod
             // Если зажата кнопка A — вытягиваем руки в сторону движения
             if (ControllerInputPoller.instance != null && ControllerInputPoller.instance.rightControllerPrimaryButton)
             {
-                GorillaTagger.Instance.offlineVRRig.leftHand.rigTarget.transform.position += leftVelocity * (predCount * 0.1f);
-                GorillaTagger.Instance.offlineVRRig.rightHand.rigTarget.transform.position += rightVelocity * (predCount * 0.1f);
+                GorillaTagger.Instance.offlineVRRig.leftHand.rigTarget.transform.position += leftVelocity * predCount;
+                GorillaTagger.Instance.offlineVRRig.rightHand.rigTarget.transform.position += rightVelocity * predCount;
             }
         }
     }
