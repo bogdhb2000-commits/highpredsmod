@@ -8,7 +8,7 @@ namespace MySilentPullMod
     public class SilentPullMod : BaseUnityPlugin
     {
         // Сила смещения
-        public static float playspaceAbusePower = 0.09f;
+        public static float playspaceAbusePower = 0.3f;
 
         void Update()
         {
