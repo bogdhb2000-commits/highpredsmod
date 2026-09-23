@@ -79,24 +79,27 @@ namespace HighPredsMod
                 if (__instance == null) return true;
                 if (!Plugin.PushEnabled) return true;
 
-                Transform leftHand = __instance.leftHandTransform;
-                if (leftHand == null) return true;
+                // ← левая рука через метод GetHandPosition(false)
+                Vector3 leftHandPos = __instance.GetHandPosition(false);
+                if (leftHandPos == Vector3.zero) return true;
 
                 if (!_initialized)
                 {
-                    _lastHandPosition = leftHand.position;
+                    _lastHandPosition = leftHandPos;
                     _initialized = true;
                     return true;
                 }
 
                 Vector3 handVelocity = Vector3.zero;
                 if (Time.fixedDeltaTime > 0f)
-                    handVelocity = (leftHand.position - _lastHandPosition) / Time.fixedDeltaTime;
-                _lastHandPosition = leftHand.position;
+                    handVelocity = (leftHandPos - _lastHandPosition) / Time.fixedDeltaTime;
+                _lastHandPosition = leftHandPos;
 
-                var rb = __instance.bodyCollider != null
-                    ? __instance.bodyCollider.attachedRigidbody
-                    : null;
+                // ← тело через метод BodyCollider()
+                Collider bodyCollider = __instance.BodyCollider();
+                if (bodyCollider == null) return true;
+
+                var rb = bodyCollider.attachedRigidbody;
                 if (rb == null) return true;
 
                 if (_isPushing)
@@ -106,12 +109,12 @@ namespace HighPredsMod
                     _pushVelocity *= Decay;
 
                     bool grounded = Physics.Raycast(
-                        __instance.bodyCollider.transform.position,
+                        bodyCollider.transform.position,
                         Vector3.down,
                         0.3f,
-                        __instance.locomotionEnabledLayers
+                        Physics.DefaultRaycastLayers,
+                        QueryTriggerInteraction.Ignore
                     );
-
                     if (_pushVelocity.magnitude < MinSpeed || (grounded && _pushVelocity.y <= 0f))
                     {
                         _isPushing = false;
@@ -120,6 +123,7 @@ namespace HighPredsMod
 
                     return false;
                 }
+
                 if (_cooldown > 0f)
                 {
                     _cooldown -= Time.fixedDeltaTime;
@@ -128,18 +132,20 @@ namespace HighPredsMod
                 }
 
                 bool onGround = Physics.Raycast(
-                    __instance.bodyCollider.transform.position,
+                    bodyCollider.transform.position,
                     Vector3.down,
                     0.5f,
-                    __instance.locomotionEnabledLayers
+                    Physics.DefaultRaycastLayers,
+                    QueryTriggerInteraction.Ignore
                 );
                 if (!onGround) return true;
 
                 bool leftHandTouching = Physics.Raycast(
-                    leftHand.position,
+                    leftHandPos,
                     Vector3.down,
                     0.12f,
-                    __instance.locomotionEnabledLayers
+                    Physics.DefaultRaycastLayers,
+                    QueryTriggerInteraction.Ignore
                 );
 
                 if (leftHandTouching && !_leftHandWasTouching)
