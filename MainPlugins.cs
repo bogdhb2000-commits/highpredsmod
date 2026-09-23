@@ -115,12 +115,6 @@ namespace HighPredsMod
                         Physics.DefaultRaycastLayers,
                         QueryTriggerInteraction.Ignore
                     );
-                    if (_pushVelocity.magnitude < MinSpeed || (grounded && _pushVelocity.y <= 0f))
-                    {
-                        _isPushing = false;
-                        _cooldown = CooldownTime;
-                    }
-
                     return false;
                 }
 
@@ -132,20 +126,14 @@ namespace HighPredsMod
                 }
 
                 bool onGround = Physics.Raycast(
-                    bodyCollider.transform.position,
-                    Vector3.down,
-                    0.5f,
-                    Physics.DefaultRaycastLayers,
-                    QueryTriggerInteraction.Ignore
+                    bodyPos, Vector3.down, 0.5f,
+                    Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore
                 );
                 if (!onGround) return true;
 
                 bool leftHandTouching = Physics.Raycast(
-                    leftHandPos,
-                    Vector3.down,
-                    0.12f,
-                    Physics.DefaultRaycastLayers,
-                    QueryTriggerInteraction.Ignore
+                    leftHandPos, Vector3.down, 0.12f,
+                    Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore
                 );
 
                 if (leftHandTouching && !_leftHandWasTouching)
