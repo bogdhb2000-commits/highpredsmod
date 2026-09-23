@@ -6,9 +6,9 @@ using GorillaLocomotion;
 using UnityEngine;
 using UnityEngine.XR;
 
-namespace LeftHandPushMod
+namespace HighPredsMod
 {
-    [BepInPlugin("com.yourname.lefthandpush", "LeftHandPush", "1.0.0")]
+    [BepInPlugin("com.highpreds.lefthandpush", "HighPredsMod", "1.0.0")]
     public class Plugin : BaseUnityPlugin
     {
         public static bool PushEnabled = false;
@@ -19,9 +19,9 @@ namespace LeftHandPushMod
         {
             try
             {
-                var harmony = new Harmony("com.yourname.lefthandpush");
+                var harmony = new Harmony("com.highpreds.lefthandpush");
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
-                Logger.LogInfo("LeftHandPush loaded.");
+                Logger.LogInfo("HighPredsMod loaded.");
             }
             catch (Exception e)
             {
@@ -44,6 +44,7 @@ namespace LeftHandPushMod
                     {
                         PushEnabled = !PushEnabled;
                         _lastAPressTime = -1f;
+                        Logger.LogInfo("Push " + (PushEnabled ? "ON" : "OFF"));
                     }
                     else
                     {
@@ -56,8 +57,8 @@ namespace LeftHandPushMod
         }
     }
 
-    [HarmonyPatch(typeof(Player), "FixedUpdate")]
-    class PlayerFixedUpdatePatch
+    [HarmonyPatch(typeof(GTPlayer), "FixedUpdate")]
+    class GTPlayerFixedUpdatePatch
     {
         private static Vector3 _pushVelocity = Vector3.zero;
         private static bool _isPushing = false;
@@ -71,7 +72,7 @@ namespace LeftHandPushMod
         private static Vector3 _lastHandPosition = Vector3.zero;
         private static bool _initialized = false;
 
-        static bool Prefix(Player __instance)
+        static bool Prefix(GTPlayer __instance)
         {
             try
             {
@@ -98,7 +99,6 @@ namespace LeftHandPushMod
                     : null;
                 if (rb == null) return true;
 
-                // === РЕЖИМ РЫВКА ===
                 if (_isPushing)
                 {
                     _pushVelocity.y -= 9.81f * Time.fixedDeltaTime;
@@ -120,7 +120,6 @@ namespace LeftHandPushMod
 
                     return false;
                 }
-                // === КУЛДАУН ===
                 if (_cooldown > 0f)
                 {
                     _cooldown -= Time.fixedDeltaTime;
@@ -128,7 +127,6 @@ namespace LeftHandPushMod
                     return true;
                 }
 
-                // === ПРОВЕРКА ЗЕМЛИ ПОД ТЕЛОМ ===
                 bool onGround = Physics.Raycast(
                     __instance.bodyCollider.transform.position,
                     Vector3.down,
@@ -137,7 +135,6 @@ namespace LeftHandPushMod
                 );
                 if (!onGround) return true;
 
-                // === КАСАНИЕ ЛЕВОЙ РУКОЙ ===
                 bool leftHandTouching = Physics.Raycast(
                     leftHand.position,
                     Vector3.down,
@@ -160,7 +157,7 @@ namespace LeftHandPushMod
             }
             catch (Exception e)
             {
-                Debug.LogError("[LeftHandPush] " + e);
+                Debug.LogError("[HighPredsMod] " + e);
                 return true;
             }
         }
