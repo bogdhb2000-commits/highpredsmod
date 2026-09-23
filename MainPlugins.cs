@@ -79,7 +79,6 @@ namespace HighPredsMod
                 if (__instance == null) return true;
                 if (!Plugin.PushEnabled) return true;
 
-                // ← левая рука через метод GetHandPosition(false)
                 Vector3 leftHandPos = __instance.GetHandPosition(false);
                 if (leftHandPos == Vector3.zero) return true;
 
@@ -95,12 +94,14 @@ namespace HighPredsMod
                     handVelocity = (leftHandPos - _lastHandPosition) / Time.fixedDeltaTime;
                 _lastHandPosition = leftHandPos;
 
-                // ← тело через метод BodyCollider()
-                Collider bodyCollider = __instance.BodyCollider();
-                if (bodyCollider == null) return true;
+                Rigidbody rb = __instance.GetComponentInChildren<Rigidbody>();
+                if (rb == null)
+                {
+                    Debug.LogWarning("[HighPredsMod] Rigidbody not found");
+                    return true;
+                }
 
-                var rb = bodyCollider.attachedRigidbody;
-                if (rb == null) return true;
+                Vector3 bodyPos = __instance.transform.position;
 
                 if (_isPushing)
                 {
@@ -109,12 +110,15 @@ namespace HighPredsMod
                     _pushVelocity *= Decay;
 
                     bool grounded = Physics.Raycast(
-                        bodyCollider.transform.position,
-                        Vector3.down,
-                        0.3f,
-                        Physics.DefaultRaycastLayers,
-                        QueryTriggerInteraction.Ignore
+                        bodyPos, Vector3.down, 0.3f,
+                        Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore
                     );
+
+                    if (_pushVelocity.magnitude < MinSpeed || (grounded && _pushVelocity.y <= 0f))
+                    {
+                        _isPushing = false;
+                        _cooldown = CooldownTime;
+                    }
                     return false;
                 }
 
